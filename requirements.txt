@@ -4,3 +4,4 @@ apscheduler
 tzlocal
 pymongo
 bson
+aioredis
