@@ -1,5 +1,5 @@
 aiogram
-dotenv
+python-dotenv
 apscheduler
 tzlocal
 pymongo
