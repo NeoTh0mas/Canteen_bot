@@ -1,0 +1,6 @@
+aiogram
+dotent
+apscheduler
+tzlocal
+pymongo
+bson
