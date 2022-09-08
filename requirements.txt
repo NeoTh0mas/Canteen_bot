@@ -2,5 +2,5 @@ aiogram
 python-dotenv
 apscheduler
 tzlocal
-pymongo
+pymongo[srv]
 aioredis
