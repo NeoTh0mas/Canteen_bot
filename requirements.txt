@@ -3,5 +3,4 @@ python-dotenv
 apscheduler
 tzlocal
 pymongo
-bson
 aioredis

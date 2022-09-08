@@ -21,12 +21,8 @@ async def planned(dispatcher: Dispatcher):
     reset_db()
 
 
-# def schedule_jobs():
-#     scheduler.add_job(planned, "cron", hour="10", args=(dp, ))
-
-
-for i in range(5):
-    scheduler.add_job(planned, "cron", hour=13, minute=i, args=(dp, ))
+def schedule_jobs():
+    scheduler.add_job(planned, "cron", hour="10", args=(dp, ))
 
 
 async def start_up():
