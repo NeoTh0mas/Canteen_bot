@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 # keyboard class
@@ -15,12 +15,14 @@ class Inline(InlineKeyboardButton):
         InlineKeyboardButton.__init__(self, name, callback_data=name)
 
 
-def create_kb(button_list):
-    buttons = []
-    for j in list(map(str, button_list)):
-        buttons.append(Inline(j))
-
-    return buttons
+class Inline_kb(InlineKeyboardMarkup):
+    def __init__(self, labels):
+        InlineKeyboardMarkup.__init__(self)
+        self.labels = labels
+        buttons = []
+        for j in list(map(str, labels)):
+            buttons.append(Inline(j))
+        self.add(*buttons)
 
 
 # keyboards
@@ -45,6 +47,11 @@ order_keyboard = Keyboard("Оформить заказ?", ["Оформить з�
 payment_keyboard = Keyboard("Способ оплаты", ["Касса", "Click"])
 confirm_keyboard = Keyboard("Подтвердить?", ["Подтвердить"])
 
+course_kb = Inline_kb(["1 курс", "2 курс"])
+groups1 = Inline_kb(["1ТН1", "1ТН2", "1ТН3", "1ТН4", "1СГ1", "1МТН1", "1МТН2", "1ВТН1", "1ВТН2"])
+groups1.add(Inline("◀Назад"))
+groups2 = Inline_kb(["2ТН1", "2ТН2", "2ТН3", "2ТН4", "2СГ1", "2МТН1", "2МТН2"])
+groups2.add(Inline("◀Назад"))
 
 # adding all the labels to the buttons
 init_keyboard.add(*init_keyboard.labels)

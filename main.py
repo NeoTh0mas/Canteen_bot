@@ -5,6 +5,7 @@ from aiogram.types import InlineKeyboardMarkup
 import atexit
 import menu
 import reservation
+import registration
 import settings
 from FSM import *
 from create_bot import dp, bot, scheduler
@@ -36,7 +37,7 @@ async def initialize(message: types.Message):
     await OrderFood.init.set()
 
 
-@dp.message_handler(commands="reset", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names)
+@dp.message_handler(commands="reset", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names + Registration.states_names)
 async def state_check(message: types.Message):
     await OrderFood.init.set()
     await message.reply("States were reset successfully", reply_markup=init_keyboard)
@@ -49,7 +50,7 @@ async def state_check(message: types.Message):
 
 # back function
 @dp.message_handler(lambda message: message.text == "◀Назад",
-                    state=[OrderFood.on_menu, OrderFood.init, OrderFood.continue_or_order, OrderFood.waiting_for_food, OrderFood.confirm, OrderFood.payment, ReserveTable.select_table, GeneralStates.settings, GeneralStates.select_lang])
+                    state=[OrderFood.on_menu, OrderFood.init, OrderFood.continue_or_order, OrderFood.waiting_for_food, OrderFood.confirm, OrderFood.payment, ReserveTable.select_table, GeneralStates.settings, GeneralStates.select_lang, Registration.course, Registration.group, Registration.name])
 async def back_to_the_keyboard(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state.split(":")[1] in ["on_menu", "continue_or_order", "settings", "select_lang"]:
@@ -65,6 +66,8 @@ async def back_to_the_keyboard(message: types.Message, state: FSMContext):
         await message.reply(menu.current_kb.name, reply_markup=menu.current_kb)
     elif current_state.split(":")[1] == "payment":
         await bot.send_message(message.chat.id, "Выберите действие: ", reply_markup=order_keyboard)
+    elif current_state.split(":")[1] in ["course", "group", "name"]:
+        await bot.send_message(message.chat.id, init_keyboard.name, reply_markup=init_keyboard)
 
     await OrderFood.previous()
 
@@ -72,33 +75,39 @@ async def back_to_the_keyboard(message: types.Message, state: FSMContext):
 # initial menu
 @dp.message_handler(state=OrderFood.init)  # initial menu
 async def book(message: types.Message):
-    if message.text == init_keyboard.labels[0]:
-        tables = InlineKeyboardMarkup()
-        idle_tables = table_find_idle()
-        tables.add(*create_kb(idle_tables))
-        await bot.send_photo(message.chat.id, photo=open("images\\canteen.png", 'rb'),
-                             caption=f"Свободные столы: *{', '.join(list(map(str, idle_tables)))}*\nОстальные уже забронированы:)", parse_mode="Markdown", reply_markup=back_keyboard)  # reserve a table
-        await message.reply("Выбирете стол который хотите забронировать: ", reply_markup=tables)
-        await ReserveTable.select_table.set()
-    elif message.text == init_keyboard.labels[1]:
-        await message.reply("Соберите корзину: ", reply_markup=menu_keyboard)  # order a meal
-        await OrderFood.on_menu.set()
-    elif message.text == init_keyboard.labels[2]:
-        lang = profile_find(message.from_user.id)["language"]
-        await message.reply(f"Language: {lang}\nsome other settings are comming soon tho", reply_markup=settings_keyboard)  # settings
-        await GeneralStates.settings.set()
-    elif message.text == init_keyboard.labels[3]:
-        try:
-            profile = profile_find(message.from_user.id)
+    if profile_find(message.from_user.id):
+        profile = profile_find(message.from_user.id)
+        if message.text == init_keyboard.labels[0]:
+            idle_tables = table_find_idle()
+            tables = Inline_kb(idle_tables)
+            await bot.send_photo(message.chat.id, photo=open("images\\canteen.png", 'rb'),
+                                 caption=f"Свободные столы: *{', '.join(list(map(str, idle_tables)))}*\nОстальные уже забронированы:)",
+                                 parse_mode="Markdown", reply_markup=back_keyboard)  # reserve a table
+            await message.reply("Выбирете стол который хотите забронировать: ", reply_markup=tables)
+            await ReserveTable.select_table.set()
+        elif message.text == init_keyboard.labels[1]:
+            await message.reply("Соберите корзину: ", reply_markup=menu_keyboard)  # order a meal
+            await OrderFood.on_menu.set()
+        elif message.text == init_keyboard.labels[2]:
+            lang = profile_find(message.from_user.id)["language"]
+            await message.reply(f"Language: {lang}\nsome other settings are comming soon tho",
+                                reply_markup=settings_keyboard)  # settings
+            await GeneralStates.settings.set()
+        elif message.text == init_keyboard.labels[3]:
             await message.reply(
-                f'Имя: {profile["name"]}\nФамилия: {profile["surname"]}\nГруппа: {profile["group"]}')  # profile
-        except (Exception, ):
-            await message.reply("Оу, кажется вас нет в базе данных😬\nЕсли вы ученик IHT, обратитесь в администрацию "
-                                "лицея с данной проблемой\nP.S заранее извиняемся за доставленные неудобства😅")
-    elif message.text == init_keyboard.labels[4]:
-        await message.reply("Finding bugs...none found, this function is useless:)")  # report
+                f'Фамилия: {profile["surname"]}\nИмя: {profile["name"]}\nГруппа: {profile["group"]}')  # profile
+        elif message.text == init_keyboard.labels[4]:
+            await message.reply("Finding bugs...none found, this function is useless:)")  # report
+    else:
+        if message.text == init_keyboard.labels[3]:
+            await bot.send_message(message.from_user.id, "Войдите в свою учетную запись следуя следующим инструкциям...", reply_markup=back_keyboard)
+            await message.reply("Для начала выберите курс на котором вы учитесь: ", reply_markup=course_kb)
+            await Registration.course.set()
+        else:
+            await message.reply("Вы не зарегестрированы, пройдите пожалуйста регистрацию нажав кнопку Профиль в главном меню\nЕсли возникли проблемы с регистрацией, обратитесь к администрации лицея")
 
 
+# "1ТН1", "1ТН2", "1ТН3", "1ТН4", "2ТН1", "2ТН2", "2ТН3", "2ТН4", "1СГ1", "2СГ1", "1МТН1", "1МТН2", "2МТН1", "2МТН2", "1ВТН1", "1ВТН2"
 # @dp.message_handler(content_types=["photo"])
 # async def get_photo_id(message: types.Message):
 #     _id = message.photo[-1].file_id
@@ -115,6 +124,7 @@ async def exit_db():
 menu.register_menu_handlers(dp)
 reservation.register_reserve_handlers(dp)
 settings.register_settings_handlers(dp)
+registration.register_registration_handlers(dp)
 
 # if code is launched not as a module it'll be executed
 if __name__ == '__main__':

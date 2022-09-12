@@ -5,7 +5,7 @@ from db_handlers import menu_get, menu_get_photo, cart_update, cart_get, cart_cl
     cart_deleted_list, cart_deleted_update, cart_deleted_reset
 
 from aiogram import types, Dispatcher
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove
 from aiogram.types.message import ContentType
 
 menu = menu_get()
@@ -44,8 +44,8 @@ async def order(message: types.Message):
     elif message.text == menu_keyboard.labels[6]:
         cart = cart_get(message.from_user.id)
         set_cart = list(set(cart))
-        cart_keyboard = InlineKeyboardMarkup()
-        cart_keyboard.add(*create_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]))
+        # cart_keyboard = InlineKeyboardMarkup()
+        # cart_keyboard.add(*create_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]))
         final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
                       range(len(set_cart))]  # cool alg to group all selected products and their prices from cart
         await message.reply(f"*🛒 Корзина*:\n\n{''.join(final_cart)}\n🧾Итого: {sum([menu[x][1] for x in cart])} сум",
@@ -115,9 +115,7 @@ async def cart_order(message: types.Message):
         if not cart:  # is there is no items in the cart
             await message.reply("Хмм, кажется вы забыли добавить еду в корзину:)", reply_markup=order_keyboard)
         else:
-            cart_keyboard = InlineKeyboardMarkup()  # creating dinamic inline keyboard so that it could be changed after deleting some items
-            cart_keyboard.add(*create_kb([f"❌ {meal}" for meal in [cart[x] for x in range(len(cart))]])).add(
-                Inline("Подтвердить"))
+            cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [cart[x] for x in range(len(cart))]]).add(Inline("Подтвердить"))  # creating dinamic inline keyboard so that it could be changed after deleting some items
             await message.reply("Удалите ненужное: ", reply_markup=cart_keyboard)
             # print(message.message_id)
             # await bot.edit_message_text("Удалите ненужное:", message.chat.id, message.message_id - 1, reply_markup=ReplyKeyboardRemove())
@@ -156,9 +154,7 @@ async def edit_cart(call):
                 cart_deleted_reset(call.from_user.id)
                 await OrderFood.order_food.set()
         else:
-            cart_keyboard = InlineKeyboardMarkup()  # update the inline keyboard so that it will change after a certain meal was deleted
-            cart_keyboard.add(*create_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]])).add(
-                Inline("Подтвердить"))
+            cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]).add(Inline("Подтвердить"))  # update the inline keyboard so that it will change after a certain meal was deleted
             await call.message.edit_text("Удалите ненужное: ", reply_markup=cart_keyboard)  # edit inline keyboard
             cart_deleted_update(call.from_user.id, meal)  # update the list of meals that were deleted from the cart
 
@@ -169,16 +165,18 @@ async def pay(message: types.Message):
     set_cart = list(set(cart))
     price = sum([menu[x][1] for x in cart])  # final price of all the meals in the cart
     if price > 0:
+        profile_find(message.from_user.id)
         if message.text == payment_keyboard.labels[0]:  # order goes directly to the canteen staff and payment is made manually with cash
             profile = profile_find(message.from_user.id)
             final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
-                          range(len(set_cart))]  # cool alg to group all selected products and their prices from cart
+                          range(
+                              len(set_cart))]  # cool alg to group all selected products and their prices from the cart
+            await bot.send_message(message.from_user.id,
+                                   f"✅ Заказ был передан администрации столовой на обработку, можете забрать его на большой перемене после совершения oплаты в размере *{price} сум* в кассу столовой)\n\nБлагодарим, что использовали бота для заказа еды:)",
+                                   reply_markup=init_keyboard, parse_mode="Markdown")
             await bot.send_message(service,
                                    f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\nНа сумму: {price}сум",
                                    parse_mode="Markdown")
-            await message.reply(
-                f"✅ Заказ был передан администрации столовой на обработку, можете забрать его на большой перемене после совершения oплаты в размере *{price} сум* в кассу столовой)\n\nБлагодарим, что использовали бота для заказа еды:)",
-                reply_markup=init_keyboard, parse_mode="Markdown")
             cart_clear(message.from_user.id)
             await OrderFood.init.set()
         elif message.text == payment_keyboard.labels[1]:

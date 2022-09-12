@@ -1,9 +1,8 @@
 from aiogram import types, Dispatcher
-from aiogram.types import InlineKeyboardMarkup
 
 from FSM import GeneralStates, OrderFood
 from create_bot import bot
-from keyboards import settings_keyboard, init_keyboard, create_kb
+from keyboards import settings_keyboard, init_keyboard, Inline_kb
 from db_handlers import profile_lang_update, profile_find
 
 languages = {"English": "en", "Türk": "tr", "Русский": "ru"}
@@ -17,8 +16,7 @@ async def setting(message: types.Message):
         for i, j in enumerate(inline_lang):
             if not j:
                 inline_lang.pop(i)
-        language_keyboard = InlineKeyboardMarkup()
-        language_keyboard.add(*create_kb(inline_lang))
+        language_keyboard = Inline_kb(inline_lang)
         await message.reply("Выбирете язык: ", reply_markup=language_keyboard)
         await GeneralStates.select_lang.set()
 

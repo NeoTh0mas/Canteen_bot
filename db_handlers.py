@@ -1,10 +1,14 @@
+from doctest import REPORT_UDIFF
 import pymongo
 import os
 from dotenv import load_dotenv, find_dotenv
 from bson.objectid import ObjectId
+import random
+from string import ascii_letters
 
 load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
+signs = ascii_letters + "0123456789"
 
 client = pymongo.MongoClient(f"mongodb+srv://stewart:{password}@database.ead0d.mongodb.net/?retryWrites=true&w=majority&authSource=admin")
 db = client.hexagon
@@ -15,21 +19,49 @@ menu = db.menu
 
 
 # create a profile 
-def profile_create(name, surname, group, lang, telegram_id):
+def profile_create(surname, name, last_name, group, lang, telegram_id):
+    password= "".join(random.sample(signs, 15))
     document = {
-    "name": name,
+    "telegram_id": telegram_id,
     "surname": surname,
+    "name": name,
+    "last_name": last_name,
     "group": group,
-    "lang": lang,
-    "telegram_id": telegram_id
+    "language": lang,
+    "cart": [],
+    "cart_deleted": [],
+    "password": password
     }
 
     profiles.insert_one(document)
 
 
+# profile_create("Musk", "Elon", "Ironmanson", "2ТН2", "eng", 0)
+# print("account was created successfully!")
+
+# check existance of a profile
+def profile_check(name, surname, group):
+    return profiles.find_one({"name": name, "surname": surname, "group": group})
+
+
+
 # read profile info by telegram id 
-def profile_find(_id):  
+def profile_find(_id):
     return profiles.find_one({"telegram_id": _id})
+
+
+# setting a telegram_id for the account that was signed in
+def register(_id, name, surname):
+    update = {
+        "$set": {"telegram_id": _id, "password": ""}
+    }
+    profiles.update_one({"name": name, "surname": surname}, update)
+
+
+# checking whether the entered password matches with the actual one
+def match_passwords(name, surname, password):
+    db_pass = profiles.find_one({"name": name, "surname": surname})["password"]
+    return password == db_pass
 
 
 # change language

@@ -19,3 +19,10 @@ class OrderFood(StatesGroup):
 
 class ReserveTable(StatesGroup):
     select_table = State()
+
+
+class Registration(StatesGroup):
+    course = State()
+    group = State()
+    name = State()
+    password = State()
