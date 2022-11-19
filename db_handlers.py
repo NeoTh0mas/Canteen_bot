@@ -1,10 +1,13 @@
+from calendar import c
 from doctest import REPORT_UDIFF
+from itertools import count
 import pymongo
 import os
 from dotenv import load_dotenv, find_dotenv
 from bson.objectid import ObjectId
 import random
 from string import ascii_letters
+import time
 
 load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
@@ -19,14 +22,15 @@ menu = db.menu
 
 
 # create a profile 
-def profile_create(surname, name, last_name, group, lang, telegram_id):
-    password= "".join(random.sample(signs, 15))
+def profile_create(surname, name, last_name, group, lang, telegram_id, status=0):
+    password= "".join(random.sample(signs, 7))
     document = {
     "telegram_id": telegram_id,
     "surname": surname,
     "name": name,
     "last_name": last_name,
     "group": group,
+    "status": status,
     "language": lang,
     "cart": [],
     "cart_deleted": [],
@@ -36,7 +40,16 @@ def profile_create(surname, name, last_name, group, lang, telegram_id):
     profiles.insert_one(document)
 
 
-# profile_create("Musk", "Elon", "Ironmanson", "2ТН2", "eng", 0)
+def profile_update():
+    p = profiles.find()
+    update = {
+        "$set": {"status": 0,}
+    }
+    for profile in p:
+        profiles.update_one({"name": profile["name"], "surname": profile["surname"]}, update)
+
+# profile_update()
+# profile_create("Emil", "Emil", "Emil", "1ТН1", "eng", 0)
 # print("account was created successfully!")
 
 # check existance of a profile
@@ -88,6 +101,14 @@ def table_create():
         docs.append(document)
 
     tables.insert_many(docs)
+
+
+# checking if thera are less than 4 tables are reserved by one group
+def table_check(group):
+    c_time = time.time()
+    # return len(list(tables.find({"group": group}))), time.time() - c_time
+    # return  len([table["group"] for table in tables.find({"group": group})]), time.time() - c_time
+    return tables.count_documents(filter={"group": group}) < 4
 
 
 # find idle tables with state false
@@ -232,7 +253,7 @@ def reset_db():
     profile_reset = {
         "$set": {"cart": []}
     }
-    profiles.update_many([user for user in profiles.find()], profile_reset)
+    # profiles.update_many([user for user in profiles.find()], profile_re)
 
 
     table_reset = {

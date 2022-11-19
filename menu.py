@@ -3,6 +3,7 @@ from keyboards import *
 from create_bot import bot, service, PAYMENT_PROVIDER_TOKEN
 from db_handlers import menu_get, menu_get_photo, cart_update, cart_get, cart_clear, profile_find, cart_remove, \
     cart_deleted_list, cart_deleted_update, cart_deleted_reset
+from datetime import datetime
 
 from aiogram import types, Dispatcher
 from aiogram.types import ReplyKeyboardRemove
@@ -106,9 +107,16 @@ async def cont_ord(message: types.Message):
 
 # ordering the food from the cart
 async def cart_order(message: types.Message):
-    if message.text == order_keyboard.labels[0]:  # confirn the order
-        await message.reply("Выберите способ оплаты: ", reply_markup=payment_keyboard)
-        await OrderFood.payment.set()
+    if message.text == order_keyboard.labels[0]:  # confirm the order
+        now = datetime.now()
+        time_s = now.replace(hour=9, minute=45)
+        time_f = now.replace(hour=14, minute=40)
+        if time_s < now < time_f:
+            await message.reply("Выберите способ оплаты: ", reply_markup=payment_keyboard)
+            await OrderFood.payment.set()
+        else:
+            await message.reply("Заказы еды доступны только в период с 9:45 до 13:40!", reply_markup=init_keyboard)
+            await OrderFood.init.set()
     elif message.text == order_keyboard.labels[1]:  # editing cart
         ReplyKeyboardRemove()
         cart = cart_get(message.from_user.id)
@@ -145,7 +153,7 @@ async def edit_cart(call):
         set_cart = cart_get(call.from_user.id)
         if not set_cart:  # if there is at least one meal in the cart
             deleted = cart_deleted_list(call.from_user.id)
-            print(deleted)
+            # print(deleted)
             if not deleted:
                 await call.message.edit_text(f"Корзина осталась прежней")
             else:
@@ -189,7 +197,7 @@ async def pay(message: types.Message):
             await bot.send_invoice(
                 message.chat.id,
                 title="Еда из корзины",
-                description=''.join([f"{set_cart[i]}" for i in range(len(set_cart))]),
+                description=''.join([f"{set_cart[i]} " for i in range(len(set_cart))]),
                 provider_token=PAYMENT_PROVIDER_TOKEN,
                 currency="uzs",
                 photo_url="https://upload.wikimedia.org/wikipedia/commons/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg",

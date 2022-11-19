@@ -24,6 +24,7 @@ password = os.environ.get("REDIS_PWD")
 bot = Bot(token=TOKEN)
 scheduler = AsyncIOScheduler(timezone=str(tzlocal.get_localzone()))
 
-loop = asyncio.get_event_loop()
+
+loop = asyncio.new_event_loop()
 storage = RedisStorage2(host="redis-13310.c264.ap-south-1-1.ec2.cloud.redislabs.com", port=13310, password=password)
 dp = Dispatcher(bot, storage=storage, loop=loop)
