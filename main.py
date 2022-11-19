@@ -127,7 +127,7 @@ async def get_photo_id(message: types.Message):
     await message.reply(f"Id of the photo:\n{_id}")
 
 
-# exit redis database in order not to cause some errors
+# exit redis database in order not to cause errors
 async def exit_db():
     await dp.storage.close()
     await dp.storage.wait_closed()
