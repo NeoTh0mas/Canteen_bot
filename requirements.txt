@@ -65,8 +65,6 @@ py==1.11.0
 pyaes==1.6.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-PyAudio @ file:///C:/Users/donik/Downloads/PyAudio-0.2.11-cp310-cp310-win_amd64.whl
-PyAutoGUI==0.9.53
 pycparser==2.21
 pygame==2.1.2
 PyGetWindow==0.0.9
