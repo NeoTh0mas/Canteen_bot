@@ -140,6 +140,7 @@ async def edit_cart(call):
         if not deleted:
             await call.message.edit_text(f"Корзина осталась прежней")
             await bot.send_message(call.from_user.id, "Выберите действие: ", reply_markup=order_keyboard)
+            await OrderFood.order_food.set()
         else:
             await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
                                          parse_mode="Markdown")
@@ -153,14 +154,11 @@ async def edit_cart(call):
         set_cart = cart_get(call.from_user.id)
         if not set_cart:  # if there is at least one meal in the cart
             deleted = cart_deleted_list(call.from_user.id)
-            # print(deleted)
-            if not deleted:
-                await call.message.edit_text(f"Корзина осталась прежней")
-            else:
-                await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
-                                             parse_mode="Markdown")
+            await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
+                                         parse_mode="Markdown")
+            await OrderFood.order_food.set()
+            if deleted:
                 cart_deleted_reset(call.from_user.id)
-                await OrderFood.order_food.set()
         else:
             cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]).add(Inline("Подтвердить"))  # update the inline keyboard so that it will change after a certain meal was deleted
             await call.message.edit_text("Удалите ненужное: ", reply_markup=cart_keyboard)  # edit inline keyboard
