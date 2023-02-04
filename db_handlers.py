@@ -15,7 +15,8 @@ db = client.hexagon
 profiles = db.profile
 tables = db.tables
 menu = db.menu
-
+orders = db.orders
+vars = db.variables
 
 # create a profile 
 def profile_create(surname, name, last_name, group, lang, telegram_id, status=0):
@@ -104,7 +105,7 @@ def table_check(group):
     c_time = time.time()
     # return len(list(tables.find({"group": group}))), time.time() - c_time
     # return  len([table["group"] for table in tables.find({"group": group})]), time.time() - c_time
-    return tables.count_documents(filter={"group": group}) < 4
+    return tables.count_documents(filter={"group": group}) < 3
 
 
 # find idle tables with state false
@@ -242,6 +243,36 @@ def cart_deleted_reset(id):
         "$set": {"cart_deleted": []}
     }
     profiles.update_one({"telegram_id": id}, update)
+
+
+# save an order to the database 
+def order_save(id, cart, total, payment, time, name, surname, group):
+    order = {
+        "telegram_id": id,
+        "name": name,
+        "surname": surname,
+        "group": group,
+        "cart": cart,
+        "total": total,
+        "payment": payment,
+        "time": time,
+    }
+
+    orders.insert_one(order)
+
+
+# time period for the order
+def time_period():
+    update = {
+        "$set": {"time_period": False if time_period_get() else True}
+    }
+
+    vars.update_one({"time_period": True if time_period_get() else False}, update)
+
+
+def time_period_get():
+    return list(vars.find())[0]["time_period"]
+    # return orders.find_one({"_id": "63dd2741a28f8c52e331db69"})["time_period"]
 
 
 # reset tables and profile info in the database based on schedule

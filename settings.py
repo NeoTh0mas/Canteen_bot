@@ -5,7 +5,7 @@ from create_bot import bot
 from keyboards import settings_keyboard, init_keyboard, Inline_kb
 from db_handlers import profile_lang_update, profile_find
 
-languages = {"English": "en", "Türk": "tr", "Русский": "ru"}
+languages = {"English": "en", "Türk": "tr", "Русский": "ru", "Uzbek": "uz"}
 
 
 # @dp.message_handler(state=GeneralStates.settings)

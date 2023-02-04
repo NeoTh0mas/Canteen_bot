@@ -18,7 +18,7 @@ async def reserve(call):
             # some backend to reserve a table (post request to db deleting the table from idle list)
             await OrderFood.init.set()
             table_update(int(call.data), profile["name"], profile["surname"], profile["group"])
-            await call.message.answer(f"✅Стол номер {call.data} был успешно забронирован на ваше имя", reply_markup=init_keyboard)
+            await call.message.answer(f"✅Стол номер {call.data} был успешно забронирован на Ваше имя", reply_markup=init_keyboard)
 
             await bot.send_message(266212760, f"🛎 Стол номер {call.data} был забронирован на имя *{profile['name']}* *{profile['surname']}* и группу *{profile['group']}*!", parse_mode="Markdown")
 

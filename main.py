@@ -8,8 +8,8 @@ import reservation
 import registration
 import settings
 from FSM import *
-from create_bot import dp, bot, scheduler
-from db_handlers import profile_find, table_find_idle, reset_db
+from create_bot import dp, bot, scheduler, time_check
+from db_handlers import profile_find, table_find_idle, reset_db, time_period, time_period_get
 from keyboards import *
 
 # variables
@@ -54,7 +54,14 @@ async def state_check(message: types.Message):
 
 @dp.message_handler(commands="terms", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names)
 async def state_check(message: types.Message):
-    await message.reply("*terms related with the click payments and our refund policy")
+    await message.reply("*terms related with the click payments and our refund policy")\
+
+
+
+@dp.message_handler(commands="time_limit", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names)
+async def state_check(message: types.Message):
+    time_period()
+    await bot.send_message(message.from_user.id, f"The time period is {'ON' if time_period_get() else 'OFF'}")
 
 
 # back function
@@ -86,17 +93,20 @@ async def back_to_the_keyboard(message: types.Message, state: FSMContext):
 async def book(message: types.Message):
     if profile_find(message.from_user.id):
         profile = profile_find(message.from_user.id)
-        if message.text == init_keyboard.labels[0]:
-            if profile["status"] == 1:
-                idle_tables = table_find_idle()
-                tables = Inline_kb(idle_tables)  # creating inline keyboard for idle tables
-                await bot.send_photo(message.chat.id, photo="AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ",
-                                     caption=f"Свободные столы: *{', '.join(list(map(str, idle_tables)))}*\nОстальные уже забронированы:)",
-                                     parse_mode="Markdown", reply_markup=back_keyboard)  # reserve a table
-                await message.reply("Выбирете стол который хотите забронировать: ", reply_markup=tables)
-                await ReserveTable.select_table.set()
+        if message.text == init_keyboard.labels[0]:  # table reservation
+            if time_check():
+                if profile["status"] == 1:
+                    idle_tables = table_find_idle()
+                    tables = Inline_kb(idle_tables)  # creating inline keyboard for idle tables
+                    await bot.send_photo(message.chat.id, photo="AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ",
+                                         caption=f"Свободные столы: *{', '.join(list(map(str, idle_tables)))}*\nОстальные уже забронированы:)",
+                                         parse_mode="Markdown", reply_markup=back_keyboard)  # reserve a table
+                    await message.reply("Выбирете стол который хотите забронировать: ", reply_markup=tables)
+                    await ReserveTable.select_table.set()
+                else:
+                    await message.reply("Вы не можете бронировать столы, обратитесь к старосте группы")
             else:
-                await message.reply("Вы не можете бронировать столы, обратитесь к старосте группы")
+                await bot.send_message(message.from_user.id, "Бронирование столов доступно только в период с 9:45 до 13:40!")
         elif message.text == init_keyboard.labels[1]:
             await message.reply("Соберите корзину: ", reply_markup=menu_keyboard)  # order a meal
             await OrderFood.on_menu.set()
@@ -109,7 +119,7 @@ async def book(message: types.Message):
             await message.reply(
                 f'Фамилия: {profile["surname"]}\nИмя: {profile["name"]}\nГруппа: {profile["group"]}\nСтатус в группе: {"Староста" if profile["status"] == 1 else "Ученик"}')  # profile
         elif message.text == init_keyboard.labels[4]:
-            await message.reply("Finding bugs...none found, this function is useless:)")  # report
+            await message.reply("Finding bugs...none found, everything works perfectly perfect, this function is useless:)")  # report
 
     else:
         if message.text == init_keyboard.labels[3]:

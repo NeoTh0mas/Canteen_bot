@@ -2,11 +2,13 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from dotenv import load_dotenv, find_dotenv
+from datetime import datetime
 import os
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import tzlocal
 
+from db_handlers import time_period_get
 
 # token
 TOKEN = "5575454212:AAGmtKOE8vGrZu7xh--k1FFV66mKjUNwyio"
@@ -28,3 +30,9 @@ scheduler = AsyncIOScheduler(timezone=str(tzlocal.get_localzone()))
 loop = asyncio.new_event_loop()
 storage = RedisStorage2(host="redis-13310.c264.ap-south-1-1.ec2.cloud.redislabs.com", port=13310, password=password)
 dp = Dispatcher(bot, storage=storage, loop=loop)
+
+
+def time_check():
+    now = datetime.now()
+    time_s, time_f = now.replace(hour=9, minute=45), now.replace(hour=11, minute=40)
+    return True if time_s < now < time_f or not time_period_get() else False

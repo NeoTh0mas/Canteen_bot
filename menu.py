@@ -1,8 +1,8 @@
 from FSM import OrderFood
 from keyboards import *
-from create_bot import bot, service, PAYMENT_PROVIDER_TOKEN
+from create_bot import bot, service, PAYMENT_PROVIDER_TOKEN, time_check
 from db_handlers import menu_get, menu_get_photo, cart_update, cart_get, cart_clear, profile_find, cart_remove, \
-    cart_deleted_list, cart_deleted_update, cart_deleted_reset
+    cart_deleted_list, cart_deleted_update, cart_deleted_reset, order_save
 from datetime import datetime
 
 from aiogram import types, Dispatcher
@@ -108,10 +108,7 @@ async def cont_ord(message: types.Message):
 # ordering the food from the cart
 async def cart_order(message: types.Message):
     if message.text == order_keyboard.labels[0]:  # confirm the order
-        now = datetime.now()
-        time_s = now.replace(hour=9, minute=45)
-        time_f = now.replace(hour=14, minute=40)
-        if time_s < now < time_f:
+        if time_check():
             await message.reply("Выберите способ оплаты: ", reply_markup=payment_keyboard)
             await OrderFood.payment.set()
         else:
@@ -152,6 +149,7 @@ async def edit_cart(call):
         cart_remove(call.from_user.id, meal)
         await call.answer(f"Блюдо \"{meal}\" было удалено из корзины!", show_alert=True)
         set_cart = cart_get(call.from_user.id)
+        cart_deleted_update(call.from_user.id, meal)  # update the list of meals that were deleted from the cart
         if not set_cart:  # if there is at least one meal in the cart
             deleted = cart_deleted_list(call.from_user.id)
             await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
@@ -162,7 +160,6 @@ async def edit_cart(call):
         else:
             cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]).add(Inline("Подтвердить"))  # update the inline keyboard so that it will change after a certain meal was deleted
             await call.message.edit_text("Удалите ненужное: ", reply_markup=cart_keyboard)  # edit inline keyboard
-            cart_deleted_update(call.from_user.id, meal)  # update the list of meals that were deleted from the cart
 
 
 # food payment
@@ -176,13 +173,14 @@ async def pay(message: types.Message):
             profile = profile_find(message.from_user.id)
             final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
                           range(
-                              len(set_cart))]  # cool alg to group all selected products and their prices from the cart
+                              len(set_cart))]  # cool alg to group all selected meals and their prices from the cart
             await bot.send_message(message.from_user.id,
                                    f"✅ Заказ был передан администрации столовой на обработку, можете забрать его на большой перемене после совершения oплаты в размере *{price} сум* в кассу столовой)\n\nБлагодарим, что использовали бота для заказа еды:)",
                                    reply_markup=init_keyboard, parse_mode="Markdown")
             await bot.send_message(service,
                                    f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\nНа сумму: {price}сум",
                                    parse_mode="Markdown")
+            order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price, "Наличные", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"], profile["group"])
             cart_clear(message.from_user.id)
             await OrderFood.init.set()
         elif message.text == payment_keyboard.labels[1]:
@@ -232,8 +230,11 @@ async def process_successful_payment(message: types.Message):
     profile = profile_find(message.from_user.id)
     final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
                   range(len(set_cart))]  # cool alg to group all selected products and their prices from cart
+    order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price,
+               "Click", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"],
+               profile["group"])
     await bot.send_message(service,
-                           f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n{''.join(final_cart)}\nНа сумму: {price}сум\nОплата была произведена через CLICK.",
+                           f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\nНа сумму: {price}сум\nОплата была произведена через CLICK.",
                            parse_mode="Markdown")
 
     cart_clear(message.from_user.id)
