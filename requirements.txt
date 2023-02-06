@@ -4,3 +4,4 @@ tzlocal
 python-dotenv
 asyncio-atexit
 pymongo
+redis

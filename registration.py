@@ -2,7 +2,7 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 
 from create_bot import bot
-from FSM import Registration, OrderFood 
+from FSM import Registration, OrderFood
 from keyboards import init_keyboard, groups1, groups2, course_kb
 from db_handlers import profile_check, register, match_passwords
 
