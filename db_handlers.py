@@ -5,7 +5,7 @@ import random
 from string import ascii_letters
 import time
 
-load_dotenv(find_dotenv())
+# load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
 signs = ascii_letters + "0123456789"
 

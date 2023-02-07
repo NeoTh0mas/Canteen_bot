@@ -66,6 +66,7 @@ async def check_password(message: types.Message, state: FSMContext):
     data = await state.get_data()
     if match_passwords(data.get("name"), data.get("surname"), message.text):
         await bot.send_message(message.from_user.id, "✅ Вы успешно вошли в аккаунт, наслаждайтесь отсутвием очередей в столовой вместе со Stewart-ом:)", reply_markup=init_keyboard)
+        await bot.send_message()
         register(message.from_user.id, data.get("name"), data.get("surname"))
         await OrderFood.init.set()
     else:

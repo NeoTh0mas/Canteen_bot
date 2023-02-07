@@ -19,7 +19,7 @@ service = 266212760
 logging.basicConfig(level=logging.INFO)
 
 # redis password for redis storage
-load_dotenv(find_dotenv())
+# load_dotenv(find_dotenv())
 password = os.environ.get("REDIS_PWD")
 
 # initialize bot and its dispatcher
