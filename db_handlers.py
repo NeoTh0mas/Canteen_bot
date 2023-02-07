@@ -7,6 +7,7 @@ import time
 
 # load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
+print(password)
 signs = ascii_letters + "0123456789"
 
 client = pymongo.MongoClient(f"mongodb+srv://stewart:{password}@database.ead0d.mongodb.net/?retryWrites=true&w=majority&authSource=admin")
