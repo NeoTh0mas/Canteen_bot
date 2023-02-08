@@ -1,7 +1,7 @@
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 
-from create_bot import bot
+from create_bot import bot, service
 from FSM import Registration, OrderFood
 from keyboards import init_keyboard, groups1, groups2, course_kb
 from db_handlers import profile_check, register, match_passwords
@@ -66,9 +66,11 @@ async def check_password(message: types.Message, state: FSMContext):
     data = await state.get_data()
     if match_passwords(data.get("name"), data.get("surname"), message.text):
         await bot.send_message(message.from_user.id, "✅ Вы успешно вошли в аккаунт, наслаждайтесь отсутвием очередей в столовой вместе со Stewart-ом:)", reply_markup=init_keyboard)
-        await bot.send_message()
         register(message.from_user.id, data.get("name"), data.get("surname"))
         await OrderFood.init.set()
+
+        for _id in service:
+            await bot.send_message(_id, f"Ученик *{data.get('name')} {data.get('surname')}* только что успешно зарегистрировался в свой аккаунт с телеграм юзернейма @{message.from_user.username}")
     else:
         await bot.send_message(message.from_user.id, "Указанный пароль неверный, попробуйте заново")
 

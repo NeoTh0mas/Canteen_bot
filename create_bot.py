@@ -21,8 +21,6 @@ logging.basicConfig(level=logging.INFO)
 # redis password for redis storage
 # load_dotenv(find_dotenv())
 password = os.environ.get("REDIS_PWD")
-print("that works")
-print(password)
 
 # initialize bot and its dispatcher
 bot = Bot(token=TOKEN)

@@ -17,11 +17,9 @@ from keyboards import *
 
 # variables
 greeting = "👋Hi, I am canteen bot working in IHT, you can reserve a table or order meal with me, try my functions to learn more!"
-# PRICE = types.LabeledPrice(label="Рис", amount=500000)
 
 
 async def planned(dispatcher: Dispatcher):
-    # await dispatcher.bot.send_message(266212760, "Message sent using scheduler!")
     reset_db()
 
 
@@ -61,7 +59,7 @@ async def state_check(message: types.Message):
 
 
 
-@dp.message_handler(commands="time_limit", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names)
+@dp.message_handler(commands="time_period", state=OrderFood.states_names + ReserveTable.states_names + GeneralStates.states_names)
 async def state_check(message: types.Message):
     time_period()
     await bot.send_message(message.from_user.id, f"The time period is {'ON' if time_period_get() else 'OFF'}")

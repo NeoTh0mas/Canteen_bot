@@ -4,10 +4,10 @@ from dotenv import load_dotenv, find_dotenv
 import random
 from string import ascii_letters
 import time
+from datetime import datetime
 
 # load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
-print(password)
 signs = ascii_letters + "0123456789"
 
 client = pymongo.MongoClient(f"mongodb+srv://stewart:{password}@database.ead0d.mongodb.net/?retryWrites=true&w=majority&authSource=admin")
@@ -47,7 +47,7 @@ def profile_update():
         profiles.update_one({"name": profile["name"], "surname": profile["surname"]}, update)
 
 # profile_update()
-# profile_create("Emil", "Emil", "Emil", "1ТН1", "eng", 0)
+# profile_create("Амир", "Амир", "Амир", "1ТН1", "ru", 0)
 # print("account was created successfully!")
 
 # check existance of a profile
@@ -67,6 +67,8 @@ def register(_id, name, surname):
         "$set": {"telegram_id": _id, "password": ""}
     }
     profiles.update_one({"name": name, "surname": surname}, update)
+
+# "time": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
 
 # checking whether the entered password matches with the actual one

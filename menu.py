@@ -230,12 +230,13 @@ async def process_successful_payment(message: types.Message):
     profile = profile_find(message.from_user.id)
     final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
                   range(len(set_cart))]  # cool alg to group all selected products and their prices from cart
-    order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price,
+    order_save(message.from_user.username, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price,
                "Click", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"],
                profile["group"])
-    await bot.send_message(service,
-                           f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\nНа сумму: {price}сум\nОплата была произведена через CLICK.",
-                           parse_mode="Markdown")
+    for _id in service:
+        await bot.send_message(_id, f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* "
+                                    f"из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\n"
+                                    f"На сумму: {price}сум\nОплата была произведена через CLICK.", parse_mode="Markdown")
 
     cart_clear(message.from_user.id)
 
