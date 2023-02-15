@@ -13,7 +13,7 @@ from db_handlers import time_period_get
 # token
 TOKEN = "5575454212:AAGmtKOE8vGrZu7xh--k1FFV66mKjUNwyio"
 PAYMENT_PROVIDER_TOKEN = "398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065"
-service = 266212760
+service = [266212760]
 
 # configure logging
 logging.basicConfig(level=logging.INFO)
