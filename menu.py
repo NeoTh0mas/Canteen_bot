@@ -177,9 +177,12 @@ async def pay(message: types.Message):
             await bot.send_message(message.from_user.id,
                                    f"✅ Заказ был передан администрации столовой на обработку, можете забрать его на большой перемене после совершения oплаты в размере *{price} сум* в кассу столовой)\n\nБлагодарим, что использовали бота для заказа еды:)",
                                    reply_markup=init_keyboard, parse_mode="Markdown")
-            await bot.send_message(service,
-                                   f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\nНа сумму: {price}сум",
-                                   parse_mode="Markdown")
+            for _id in service:
+                await bot.send_message(_id,
+                                       f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* "
+                                       f"из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\n"
+                                       f"На сумму: {price}сум", parse_mode="Markdown")
+                
             order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price, "Наличные", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"], profile["group"])
             cart_clear(message.from_user.id)
             await OrderFood.init.set()
