@@ -70,7 +70,7 @@ async def check_password(message: types.Message, state: FSMContext):
         await OrderFood.init.set()
 
         for _id in service:
-            await bot.send_message(_id, f"Ученик *{data.get('name')} {data.get('surname')}* только что успешно зарегистрировался в свой аккаунт с телеграм юзернейма @{message.from_user.username}")
+            await bot.send_message(_id, f"Ученик *{data.get('name')} {data.get('surname')}* только что успешно зарегистрировался в свой аккаунт с телеграм юзернейма @{message.from_user.username}", parse_mode="Markdown")
     else:
         await bot.send_message(message.from_user.id, "Указанный пароль неверный, попробуйте заново")
 

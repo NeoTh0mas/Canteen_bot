@@ -120,8 +120,13 @@ async def cart_order(message: types.Message):
         if not cart:  # is there is no items in the cart
             await message.reply("Хмм, кажется вы забыли добавить еду в корзину:)", reply_markup=order_keyboard)
         else:
-            cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [cart[x] for x in range(len(cart))]]).add(Inline("Подтвердить"))  # creating dinamic inline keyboard so that it could be changed after deleting some items
-            await message.reply("Удалите ненужное: ", reply_markup=cart_keyboard)
+            cart_keyboard = Inline_kb([])
+            for meal in [f"❌ {meal}" for meal in [cart[x] for x in range(len(cart))]]:
+                cart_keyboard.add(Inline(meal))
+            cart_keyboard.add(Inline("Подтвердить"))
+            # cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [cart[x] for x in range(len(cart))]]).add(Inline("Подтвердить"))  # creating dinamic inline keyboard so that it could be changed after deleting some items
+            await message.reply("Удалите то что считаете ненужным", reply_markup=types.ReplyKeyboardRemove())
+            await bot.send_message(message.from_user.id, "Выберите блюда: ", reply_markup=cart_keyboard)
             # print(message.message_id)
             # await bot.edit_message_text("Удалите ненужное:", message.chat.id, message.message_id - 1, reply_markup=ReplyKeyboardRemove())
             await OrderFood.edit_cart.set()
@@ -158,7 +163,11 @@ async def edit_cart(call):
             if deleted:
                 cart_deleted_reset(call.from_user.id)
         else:
-            cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]).add(Inline("Подтвердить"))  # update the inline keyboard so that it will change after a certain meal was deleted
+            cart_keyboard = Inline_kb([])
+            for meal in [f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]:
+                cart_keyboard.add(Inline(meal))
+            cart_keyboard.add(Inline("Подтвердить"))
+            # cart_keyboard = Inline_kb([f"❌ {meal}" for meal in [set_cart[x] for x in range(len(set_cart))]]).add(Inline("Подтвердить"))  # update the inline keyboard so that it will change after a certain meal was deleted
             await call.message.edit_text("Удалите ненужное: ", reply_markup=cart_keyboard)  # edit inline keyboard
 
 
@@ -183,7 +192,7 @@ async def pay(message: types.Message):
                                        f"из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\n"
                                        f"На сумму: {price}сум", parse_mode="Markdown")
 
-            order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price, "Наличные", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"], profile["group"])
+            order_save(message.from_user.id, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price, "Наличные", profile["name"], profile["surname"], profile["group"])
             cart_clear(message.from_user.id)
             await OrderFood.init.set()
         elif message.text == payment_keyboard.labels[1]:
@@ -234,12 +243,12 @@ async def process_successful_payment(message: types.Message):
     final_cart = [f"{i + 1}. *{set_cart[i]}*\n{cart.count(set_cart[i])} x {menu[set_cart[i]][1]}\n\n" for i in
                   range(len(set_cart))]  # cool alg to group all selected products and their prices from cart
     order_save(message.from_user.username, list(f"{cart[x]} - {menu[cart[x]][1]} сум" for x in range(len(cart))), price,
-               "Click", datetime.now().strftime("%d.%m.%Y %H:%M:%S"), profile["name"], profile["surname"],
+               "Click", profile["name"], profile["surname"],
                profile["group"])
     for _id in service:
         await bot.send_message(_id, f"🛎 Поступил новый заказ:\n\n*{profile['name']} {profile['surname']}* "
                                     f"из группы *{profile['group']}* заказал:\n\n{''.join(final_cart)}\n"
-                                    f"На сумму: {price}сум\nОплата была произведена через CLICK.", parse_mode="Markdown")
+                                    f"На сумму: {price} сум\nОплата была произведена через CLICK.", parse_mode="Markdown")
 
     cart_clear(message.from_user.id)
 

@@ -4,7 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 import random
 from string import ascii_letters
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # load_dotenv(find_dotenv())
 password = os.environ.get("MONGODB_PWD")
@@ -15,12 +15,16 @@ db = client.hexagon
 
 profiles = db.profile
 tables = db.tables
+p1 = db.period1
+p2 = db.period2
+p3 = db.period3
 menu = db.menu
 orders = db.orders
 vars = db.variables
+bugs = db.bug_reports
 
 # create a profile 
-def profile_create(surname, name, last_name, group, lang, telegram_id, status=0):
+def profile_create(surname, name, last_name, group, lang, telegram_id):
     password= "".join(random.sample(signs, 7))
     document = {
     "telegram_id": telegram_id,
@@ -28,10 +32,7 @@ def profile_create(surname, name, last_name, group, lang, telegram_id, status=0)
     "name": name,
     "last_name": last_name,
     "group": group,
-    "status": status,
     "language": lang,
-    "cart": [],
-    "cart_deleted": [],
     "password": password
     }
 
@@ -41,13 +42,13 @@ def profile_create(surname, name, last_name, group, lang, telegram_id, status=0)
 def profile_update():
     p = profiles.find()
     update = {
-        "$set": {"status": 0,}
+        "$set": {"period": 0,}
     }
     for profile in p:
         profiles.update_one({"name": profile["name"], "surname": profile["surname"]}, update)
 
 # profile_update()
-# profile_create("Амир", "Амир", "Амир", "1ТН1", "ru", 0)
+# profile_create("Альяна", "Альяна", "Альяна", "2ТН2", "ru", 0)
 # print("account was created successfully!")
 
 # check existance of a profile
@@ -64,11 +65,10 @@ def profile_find(_id):
 # setting a telegram_id for the account that was signed in
 def register(_id, name, surname):
     update = {
-        "$set": {"telegram_id": _id, "password": ""}
+        "$set": {"telegram_id": _id, "status": 0, "cart": [], "cart_deleted": [], "table": 0, "time_of_joining": (datetime.now() - timedelta(minutes=30)).strftime("%d.%m.%Y %H:%M:%S")},
+        "$unset": {"password": ""}
     }
     profiles.update_one({"name": name, "surname": surname}, update)
-
-# "time": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
 
 # checking whether the entered password matches with the actual one
@@ -94,16 +94,15 @@ def table_create():
         document = {
         "number": i,
         "state": False,
-        "name": "",
-        "surname": "",
-        "group": ""
+        "reserver": [],
+        "seats": 4,
     }
         docs.append(document)
 
     tables.insert_many(docs)
 
 
-# checking if thera are less than 4 tables are reserved by one group
+# checking if there are less than 4 tables reserved by one group
 def table_check(group):
     c_time = time.time()
     # return len(list(tables.find({"group": group}))), time.time() - c_time
@@ -111,24 +110,94 @@ def table_check(group):
     return tables.count_documents(filter={"group": group}) < 3
 
 
-# find idle tables with state false
-def table_find_idle():
-    return [table["number"] for table in tables.find({"state": False})]
+def table_check_profile(_id):
+    return True if profiles.find_one({"telegram_id": _id})["table"] else False
 
+
+# find idle tables with state false
+def table_find_idle(period):
+    if period == 1:
+        return sorted([table["number"] for table in p1.find({"state": False})])
+    elif period == 2:
+        return sorted([table["number"] for table in p2.find({"state": False})])
+    elif period == 3:
+        return sorted([table["number"] for table in p3.find({"state": False})])
 
 # return the information about the reserved tables
 def table_find(number):
     return tables.find_one({"number": number})
 
 
-# setting profile values to reserved table and making the state true
-def table_update(number, name, surname, group):
+# get number of seats and seats of the needed table
+def get_seats(number, period):
+    if period == 1:
+        table = p1.find_one({"number": number})
+        return table["num_of_seats"], table["seats"] 
+    elif period == 2:
+        table = p2.find_one({"number": number})
+        return table["num_of_seats"], table["seats"]
+    elif period == 3:
+        table = p3.find_one({"number": number})
+        return table["num_of_seats"], table["seats"]
+
+
+def people_find(group):
+    people = profiles.find({"group": group, "table": 0})
+    return [f'{person["name"]} {person["surname"]}' for person in people]
+
+
+def add_person(name, surname, number, period):
     update = {
-        "$set": {"state": True, "name": name, "surname": surname, "group": group}
+        "$set": {"table": number, "period": period}
+    }
+    
+    seat_update = {
+        "$set": {"seats": list(get_seats(number, period)[1]) + [f'{name} {surname}']}
     }
 
-    tables.update_one({"number": number}, update)
+    if period == 1:
+        p1.update_one({"number": number}, seat_update)
+    elif period == 2:
+        p2.update_one({"number": number}, seat_update)
+    elif period == 3:
+        p3.update_one({"number": number}, seat_update)
+    profiles.update_one({"name": name, "surname": surname}, update)
 
+
+def remove_person(name, surname, number, period):
+    people = list(get_seats(number, period)[1])
+    people.remove(f'{name} {surname}')
+    update = {
+        "$set": {"table": 0, "period": 0}
+    }
+    seat_update = {
+        "$set": {"seats": people}
+    }
+
+    if period == 1:
+        p1.update_one({"number": number}, seat_update)
+    elif period == 2:
+        p2.update_one({"number": number}, seat_update)
+    elif period == 3:
+        p3.update_one({"number": number}, seat_update)
+    profiles.update_one({"name": name, "surname": surname}, update)
+
+# setting profile values to reserved table and making the state true
+def table_update(number, name, surname, group, period):
+    update = {
+        "$set": {"state": True, "reserver": [name, surname, group]}
+    }
+
+    if period == 1:
+        p1.update_one({"number": number}, update)
+    elif period == 2:
+        p2.update_one({"number": number}, update)
+    elif period == 3:
+        p3.update_one({"number": number}, update)
+    
+
+    update_profile = {"$set": {"table": number, "period": period}}
+    profiles.update_one({"name": name, "surname": surname, "group": group}, update_profile)
 
 # clear all the values in the tables collection
 def table_clean():
@@ -137,6 +206,25 @@ def table_clean():
             "$set": {"state": False, "name": "", "surname": "", "group": ""}
         }
         tables.update_one({"number": i}, update)
+
+# temp
+def table_edit():
+    table_reset = {
+        "$set": {"state": False, "seats": 0, "reserver": []}
+    }
+    for id in [x["_id"] for x in tables.find()]:
+        tables.update_one({"_id": id}, table_reset)
+
+
+# temp
+def seats_update():
+    for i in range(1, 25):
+        table = table_find(i)["seats"]
+        update = {
+            "$set": {"seats": []}
+        }
+        for j in [p1, p2, p3]:
+            j.update_one({"number": i}, update)
 
 
 # create a menu collection
@@ -249,7 +337,7 @@ def cart_deleted_reset(id):
 
 
 # save an order to the database 
-def order_save(id, cart, total, payment, time, name, surname, group):
+def order_save(id, cart, total, payment, name, surname, group):
     order = {
         "telegram_id": id,
         "name": name,
@@ -258,10 +346,25 @@ def order_save(id, cart, total, payment, time, name, surname, group):
         "cart": cart,
         "total": total,
         "payment": payment,
-        "time": time,
+        "time": (datetime.now() - timedelta(minutes=30)).strftime("%d.%m.%Y %H:%M:%S")
     }
 
     orders.insert_one(order)
+
+
+def bug_save(telegram_id, user, description, photo_id):
+    profile = profile_find(telegram_id)
+    bug = {
+        "name": profile["name"],
+        "surname": profile["surname"],
+        "group": profile["group"],
+        "telegram_user": f"@{user}",
+        "description": description,
+        "photo_id": photo_id,
+        "date": (datetime.now() - timedelta(minutes=30)).strftime("%d.%m.%Y %H:%M:%S")
+    }
+
+    bugs.insert_one(bug)
 
 
 # time period for the order
@@ -275,7 +378,6 @@ def time_period():
 
 def time_period_get():
     return list(vars.find())[0]["time_period"]
-    # return orders.find_one({"_id": "63dd2741a28f8c52e331db69"})["time_period"]
 
 
 # reset tables and profile info in the database based on schedule

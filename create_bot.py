@@ -1,7 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
-from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
 import os
 import logging
@@ -9,10 +8,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import tzlocal
 
 from db_handlers import time_period_get
-
+# 5874860229:AAH2_hWPVfUBpt7qybnjvfb0FeqAepv3gWs  test
+# 5575454212:AAGmtKOE8vGrZu7xh--k1FFV66mKjUNwyio  original
 # token
-TOKEN = "5575454212:AAGmtKOE8vGrZu7xh--k1FFV66mKjUNwyio"
-PAYMENT_PROVIDER_TOKEN = "398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065"
+TOKEN = "5874860229:AAH2_hWPVfUBpt7qybnjvfb0FeqAepv3gWs"
+PAYMENT_PROVIDER_TOKEN = "398062629:TEST:999999999_F91D 8F69C042267444B74CC0B3C747757EB0E065"
 service = [266212760]
 
 # configure logging
