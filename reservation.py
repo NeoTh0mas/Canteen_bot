@@ -50,7 +50,7 @@ async def reserve(call):
 
 # selecting a period on which the table should be reserved
 async def period(call):
-    idle_tables = table_find_idle(call.data)
+    idle_tables = table_find_idle(int(call.data))
     tables = Inline_kb_custom(labels=idle_tables, callback=str(call.data))  # creating inline keyboard for idle tables
     tables.add(Inline("◀Назад"))
     await call.message.edit_text("Выберите стол который хотите забронировать: ", reply_markup=tables)
@@ -74,7 +74,7 @@ async def people(call, state=FSMContext):
 async def select_confirm(call, state=FSMContext):
     if call.data == "◀Назад":
         profile = profile_find(call.from_user.id)
-        table = get_seats(profile["table"], profile["period"])
+        table = get_seats(profile["table"], int(profile["period"]))
         seats_kb = Inline_kb([])
         for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
             seats_kb.add(Inline(person))
@@ -102,7 +102,7 @@ async def confirm(call, state=FSMContext):
             await call.answer(f"❌ {name} {surname} больше не сидит с вами за одним столом!", show_alert=True)
             remove_person(name, surname, profile["table"], int(profile["period"]))
 
-        table = get_seats(profile["table"], profile["period"])
+        table = get_seats(profile["table"], int(profile["period"]))
         seats_kb = Inline_kb([])
         for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
             seats_kb.add(Inline(person))
@@ -119,7 +119,7 @@ async def confirm(call, state=FSMContext):
                 call.from_user.id, call.message.message_id, reply_markup=people_kb, parse_mode="Markdown")
             await ReserveTable.select_confirm.set()
         elif data.get("cmd") == "remove":
-            table = get_seats(profile["table"], profile["period"])
+            table = get_seats(profile["table"], int(profile["period"]))
             seats_kb = Inline_kb([])
             for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
                 seats_kb.add(Inline(person))

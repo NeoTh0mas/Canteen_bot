@@ -104,7 +104,7 @@ async def book(message: types.Message):
             if time_check():
                 if not table_check_profile(message.from_user.id):
                     await bot.send_photo(message.chat.id,
-                                         photo="AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ",
+                                         photo="AgACAgIAAxkBAAPJY_Xx4LXRl0NwEEjijCdTtPAUiPMAApHBMRvQybFLhEzBp3fjW0UBAAMCAAN5AAMuBA",
                                          reply_markup=back_keyboard)  # reserve a table
                     # AgACAgIAAxkBAAPJY_Xx4LXRl0NwEEjijCdTtPAUiPMAApHBMRvQybFLhEzBp3fjW0UBAAMCAAN5AAMuBA test
                     # AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ original
@@ -113,7 +113,8 @@ async def book(message: types.Message):
                 else:
                     time = '11:20 - 11:40' if profile['period'] == 1 else '11:40 - 12:00' if profile['period'] == 2 else '12:00 - 12:20'
                     await bot.send_message(message.from_user.id, f"Вы забронировали стол № *{profile['table']}* на время *{time}*", reply_markup=back_keyboard, parse_mode="Markdown")
-                    table = get_seats(profile["table"], profile["period"])
+                    table = get_seats(profile["table"], int(profile["period"]))
+                    print(table)
                     seats_kb = Inline_kb([])
                     for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
                         seats_kb.add(Inline(person))
