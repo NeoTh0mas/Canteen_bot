@@ -104,7 +104,7 @@ async def book(message: types.Message):
             if time_check():
                 if not table_check_profile(message.from_user.id):
                     await bot.send_photo(message.chat.id,
-                                         photo="AgACAgIAAxkBAAPJY_Xx4LXRl0NwEEjijCdTtPAUiPMAApHBMRvQybFLhEzBp3fjW0UBAAMCAAN5AAMuBA",
+                                         photo="AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ",
                                          reply_markup=back_keyboard)  # reserve a table
                     # AgACAgIAAxkBAAPJY_Xx4LXRl0NwEEjijCdTtPAUiPMAApHBMRvQybFLhEzBp3fjW0UBAAMCAAN5AAMuBA test
                     # AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ original
