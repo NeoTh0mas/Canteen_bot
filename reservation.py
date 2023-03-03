@@ -50,7 +50,7 @@ async def reserve(call):
 
 # selecting a period on which the table should be reserved
 async def period(call):
-    idle_tables = table_find_idle("1" if call.data == "1" else "2" if call.data == "2" else "3")
+    idle_tables = table_find_idle(call.data)
     tables = Inline_kb_custom(labels=idle_tables, callback=str(call.data))  # creating inline keyboard for idle tables
     tables.add(Inline("◀Назад"))
     await call.message.edit_text("Выберите стол который хотите забронировать: ", reply_markup=tables)
