@@ -81,9 +81,9 @@ period_1 = Inline("(1) 11:20 - 11:40")
 period_2 = Inline("(2) 11:40 - 12:00")
 period_3 = Inline("(3) 12:00 - 12:20")
 
-period_1.callback_data = "1"
-period_2.callback_data = "2"
-period_3.callback_data = "3"
+period_1.callback_data = 1
+period_2.callback_data = 2
+period_3.callback_data = 3
 
 period_kb = Inline_kb([]).add(period_1).add(period_2).add(period_3)
 confirm_inline_kb = Inline_kb(["Подтвердить", "◀Назад"])
