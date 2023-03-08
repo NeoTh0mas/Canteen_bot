@@ -20,6 +20,7 @@ class OrderFood(StatesGroup):
 class ReserveTable(StatesGroup):
     select_period = State()
     select_table = State()
+    cancel_table = State()
     select_people = State()
     select_confirm = State()
     confirm = State()

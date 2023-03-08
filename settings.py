@@ -2,7 +2,7 @@ from aiogram import types, Dispatcher
 
 from FSM import GeneralStates, OrderFood
 from create_bot import bot
-from keyboards import settings_keyboard, init_keyboard, Inline_kb
+from keyboards import settings_keyboard, init_keyboard, Inline_kb, back_keyboard
 from db_handlers import profile_lang_update, profile_find
 
 languages = {"English": "en", "Türk": "tr", "Русский": "ru", "Uzbek": "uz"}
@@ -17,7 +17,8 @@ async def setting(message: types.Message):
             if not j:
                 inline_lang.pop(i)
         language_keyboard = Inline_kb(inline_lang)
-        await message.reply("Выбирете язык: ", reply_markup=language_keyboard)
+        await bot.send_message(message.chat.id, "❕ Выбрав язык называение всех кнопок и интерфейса поменяется (пока в разработке)", reply_markup=back_keyboard)
+        await bot.send_message(message.chat.id, "Выбирете язык: ", reply_markup=language_keyboard)
         await GeneralStates.select_lang.set()
 
 

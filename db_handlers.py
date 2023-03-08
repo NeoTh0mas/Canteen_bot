@@ -123,9 +123,15 @@ def table_find_idle(period):
     elif period == 3:
         return sorted([table["number"] for table in p3.find({"state": False})])
 
+
 # return the information about the reserved tables
-def table_find(number):
-    return tables.find_one({"number": number})
+def table_find(number, period):
+    if period == 1:
+        return p1.find_one({"number": number})
+    elif period == 2:
+        return p2.find_one({"number": number})
+    elif period == 3:
+        return p3.find_one({"number": number})
 
 
 # get number of seats and seats of the needed table
@@ -206,6 +212,33 @@ def table_clean():
             "$set": {"state": False, "name": "", "surname": "", "group": ""}
         }
         tables.update_one({"number": i}, update)
+    
+
+def table_reset(table, period):
+    table = table_find(table, period)
+    table_update = {
+        "$set": {"state": False, "reserver": [], "seats": []}
+    }
+    seats_update = {
+        "$set": {"table": 0, "period": 0}
+    }
+
+    if table['seats']:
+        for person in table["seats"]:
+            name, surname = person.split()
+            profiles.update_one({"name": name, "surname": surname}, seats_update)
+
+    if table['reserver']:
+        profiles.update_one({"name": table["reserver"][0], "surname": table["reserver"][1]}, seats_update)
+
+
+    if period == 1:
+        p1.update_one({"number": table['number']}, table_update)
+    elif period == 2:
+        p2.update_one({"number": table['number']}, table_update)
+    elif period == 3:
+        p3.update_one({"number": table['number']}, table_update)
+
 
 # temp
 def table_edit():
@@ -383,16 +416,13 @@ def time_period_get():
 # reset tables and profile info in the database based on schedule
 def reset_db():
     profile_reset = {
-        "$set": {"cart": []}
+        "$set": {"cart": [], "table": 0, "period": 0}
     }
     for id in [x["_id"] for x in profiles.find()]:
         profiles.update_one({"_id": id}, profile_reset)
-
-
-    table_reset = {
-        "$set": {"state": False, "name": "", "surname": "", "group": ""}
-    }
-    for id in [x["_id"] for x in tables.find()]:
-        tables.update_one({"_id": id}, table_reset)
+    
+    for period in range(1, 4):
+        for table in range(1, len(list(p1.find())) + 1):
+            table_reset(table, period)
     
     print("Database was reset successfully")

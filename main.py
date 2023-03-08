@@ -11,12 +11,12 @@ import registration
 import settings
 import bug_report
 from FSM import *
-from create_bot import dp, bot, scheduler, time_check
+from create_bot import dp, bot, scheduler, time_check, table_id
 from db_handlers import profile_find, reset_db, time_period, time_period_get, table_check_profile, get_seats
 from keyboards import *
 
 # variables
-greeting = "👋Hi, I am canteen bot working in IHT, you can reserve a table or order meal with me, try my functions to learn more!"
+greeting = "👋Hi, I am canteen bot working in IHT, you can reserve a table or order meal with me, try my functions to learn mo`re!"
 
 
 async def planned(dispatcher: Dispatcher):
@@ -73,8 +73,11 @@ async def state_check(message: types.Message):
                            Registration.course, Registration.group, Registration.name, BugReport.description])
 async def back_to_the_keyboard(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
-    if current_state.split(":")[1] in ["on_menu", "continue_or_order", "settings", "select_lang"]:
+    if current_state.split(":")[1] in ["on_menu", "continue_or_order", "settings"]:
         await bot.send_message(message.chat.id, init_keyboard.name, reply_markup=init_keyboard)
+    elif current_state.split(":")[1] == "select_lang":
+        await bot.send_message(message.chat.id, init_keyboard.name, reply_markup=init_keyboard)
+        await bot.edit_message_text("Язык остался прежним", message.chat.id, message.message_id - 1)
     elif current_state.split(":")[1] == "waiting_for_food":
         await bot.send_message(message.chat.id, menu_keyboard.name, reply_markup=menu_keyboard)
     elif current_state.split(":")[1] in ["select_table", "select_period", "select_confirm", "confirm"]:
@@ -82,8 +85,8 @@ async def back_to_the_keyboard(message: types.Message, state: FSMContext):
         await bot.delete_message(message.chat.id, message.message_id - 2)
         await bot.delete_message(message.chat.id, message.message_id - 1)
     elif current_state.split(":")[1] in ["description", "select_people"]:
-        await bot.delete_message(message.from_user.id, message.message_id - 1)
         await bot.send_message(message.chat.id, init_keyboard.name, reply_markup=init_keyboard)
+        await bot.delete_message(message.from_user.id, message.message_id - 1)
     elif current_state.split(":")[1] == "confirm":
         await bot.delete_message(message.chat.id, message.message_id - 2)
         await bot.send_message(message.chat.id, menu.current_kb.name, reply_markup=menu.current_kb)
@@ -104,20 +107,18 @@ async def book(message: types.Message):
             if time_check():
                 if not table_check_profile(message.from_user.id):
                     await bot.send_photo(message.chat.id,
-                                         photo="AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ",
+                                         photo=table_id,
                                          reply_markup=back_keyboard)  # reserve a table
-                    # AgACAgIAAxkBAAPJY_Xx4LXRl0NwEEjijCdTtPAUiPMAApHBMRvQybFLhEzBp3fjW0UBAAMCAAN5AAMuBA test
-                    # AgACAgIAAxkBAAIe22MfWKQe0kNQ-MOkVGqa4oFjHO9rAAKfwjEb-dz5SNhQ_YJkWNSmAQADAgADeQADKQQ original
                     await bot.send_message(message.chat.id, "Выберите период на который хотите забронировать стол: ", reply_markup=period_kb)
                     await ReserveTable.select_period.set()
                 else:
                     time = '11:20 - 11:40' if profile['period'] == 1 else '11:40 - 12:00' if profile['period'] == 2 else '12:00 - 12:20'
                     await bot.send_message(message.from_user.id, f"Вы забронировали стол № *{profile['table']}* на время *{time}*", reply_markup=back_keyboard, parse_mode="Markdown")
                     table = get_seats(profile["table"], int(profile["period"]))
-                    print(table)
                     seats_kb = Inline_kb([])
                     for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
                         seats_kb.add(Inline(person))
+                    seats_kb.add(Inline("🔁 Отменить бронь"))
                     await bot.send_message(message.from_user.id, "Хотите добавить людей, которые будут сидеть рядом?", reply_markup=seats_kb)
                     await ReserveTable.select_people.set()
             else:

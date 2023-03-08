@@ -144,7 +144,7 @@ async def edit_cart(call):
             await bot.send_message(call.from_user.id, "Выберите действие: ", reply_markup=order_keyboard)
             await OrderFood.order_food.set()
         else:
-            await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
+            await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были(о) удалены из вашей корзины",
                                          parse_mode="Markdown")
             await bot.send_message(call.from_user.id, "Выберите действие: ", reply_markup=order_keyboard)
         cart_deleted_reset(call.from_user.id)
@@ -159,6 +159,7 @@ async def edit_cart(call):
             deleted = cart_deleted_list(call.from_user.id)
             await call.message.edit_text(f"Блюда(о) *{' '.join(deleted)[:-1]}* были удалены из вашей корзины",
                                          parse_mode="Markdown")
+            await bot.send_message(call.from_user.id, "Выберите действие: ", reply_markup=order_keyboard)
             await OrderFood.order_food.set()
             if deleted:
                 cart_deleted_reset(call.from_user.id)
