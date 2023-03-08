@@ -8,7 +8,7 @@ from db_handlers import profile_find, table_update, table_check, table_find_idle
 
 
 async def back_to_add(call, t, p):
-    table = get_seats(t, p)
+    table = get_seats(t, int(p))
     seats_kb = Inline_kb([])
     for person in [f"❌ {x}" for x in table[1]] + ["➕ Добавить" for _ in range(table[0] - (len(table[1]) + 1))]:
         seats_kb.add(Inline(person))
@@ -120,7 +120,7 @@ async def confirm(call, state=FSMContext):
         surname = data.get('surname')
         if data.get("cmd") == 'add':
             await call.answer(f"✅ Ученик с именем {name} {surname} был успешно добавлен к вам за стол!", show_alert=True)
-            add_person(name, surname, profile["table"], profile["period"])
+            add_person(name, surname, profile["table"], int(profile["period"]))
         elif data.get("cmd") == "remove":
             await call.answer(f"❌ {name} {surname} больше не сидит с вами за одним столом!", show_alert=True)
             remove_person(name, surname, profile["table"], int(profile["period"]))
